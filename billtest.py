@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import gspread
 from google.oauth2.service_account import Credentials
-from google.auth.transport.requests import AuthorizedSession
 
 # --- 페이지 기본 설정 ---
 st.set_page_config(
@@ -16,18 +15,16 @@ st.set_page_config(
 def get_gspread_client():
     """
     gspread 클라이언트 객체를 생성하고 캐시합니다.
-    (변경점) google-auth를 통해 명시적으로 인증 세션을 생성하고 gspread에 주입합니다.
+    (최종 수정) gspread.Client()에 Credentials 객체를 직접 전달합니다.
     """
     # 1. google-auth 라이브러리를 사용하여 자격 증명(Credentials) 객체 생성
     creds_dict = st.secrets["gcp_service_account"]
     scopes = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
     creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
 
-    # 2. 자격 증명을 사용하여 자동으로 토큰을 갱신하는 공인된 세션(AuthorizedSession) 생성
-    session = AuthorizedSession(creds)
-
-    # 3. gspread.authorize() 대신, 생성한 세션을 직접 주입하여 gspread 클라이언트 초기화
-    client = gspread.Client(auth=session)
+    # 2. gspread.authorize() 대신, 생성한 자격 증명(creds)을 직접 주입하여 클라이언트 초기화
+    #    이렇게 하면 gspread가 내부적으로 올바른 인증 세션을 생성하여 사용합니다.
+    client = gspread.Client(auth=creds)
     
     return client
 
