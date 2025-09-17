@@ -15,7 +15,7 @@ st.set_page_config(
 @st.cache_resource(ttl=600)
 def get_gspread_client():
     """gspread 클라이언트 객체를 생성하고 캐시합니다."""
-    creds_dict = st.secrets["ggcp_service_account"]
+    creds_dict = st.secrets["gcp_service_account"]
     scopes = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
     creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
     client = gspread.authorize(creds)
