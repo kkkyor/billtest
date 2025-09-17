@@ -127,27 +127,48 @@ else:
             
             if not result_df.empty:
                 st.info("✍️ 표시가 된 항목들은 **입력을 권장**하는 주요 항목입니다. 셀을 더블클릭하여 수정해주세요.")
-
+                # 1. 편집을 허용할 열과 비활성화할 열 목록을 동적으로 생성합니다.
+                all_columns = result_df.columns.tolist()
+                editable_columns = [
+                    "전기차보조금", 
+                    "고객전화번호", 
+                    "수수료율입력", 
+                    "수수료금액입력"
+                ]
+                # 전체 열에서 편집 가능 열을 제외하여 비활성화 목록 생성
+                disabled_columns = [col for col in all_columns if col not in editable_columns]
+                
+                # 2. 데이터 행 개수에 맞춰 표의 높이를 동적으로 계산합니다. (1줄=35px)
+                dynamic_height = (len(result_df) + 1) * 35 + 3 # +3은 여유 공간
+        
                 edited_df = st.data_editor(
-                    result_df,
-                    use_container_width=True,
-                    column_config={
-                        "sheet_row_number": None,
-
-                        # 3. 요청에 따라 추가로 숨길 열
-                        "고유ID": None,
-                        "수수료유형": None,
-                        "formula_type": None,
-                        "회사부가세": None,
-                        "회사수수료": None,
-                        
-                        "수수료율입력": st.column_config.NumberColumn("✍️ 수수료율", help="수수료 **비율(%)**을 입력해주세요. 예: 3.5"),
-                        "수수료금액입력": st.column_config.NumberColumn("✍️ 수수료금액", help="계산된 **수수료 총액**을 입력해주세요."),
-                        "전화번호": st.column_config.TextColumn("✍️ 전화번호", help="고객의 연락처를 입력해주세요."),
-                        "전기차보조금": st.column_config.NumberColumn("✍️ 전기차보조금", help="전기차 보조금이 있는 경우 **금액**을 입력해주세요.")
-                    },
-                    num_rows="dynamic",
-                    key=f"editor_{selected_salesperson}"
+                                result_df,
+                                use_container_width=True,
+                                height=dynamic_height,          
+                                disabled=disabled_columns,      
+                                column_config={
+                                    # 숨김 처리 및 기타 설정은 그대로 유지합니다.
+                                    "sheet_row_number": None,
+                                    "고유ID": None,
+                                    "수수료유형": None,
+                                    "formula_type": None,
+                                    "회사부가세": None,
+                                    "회사수수료": None,
+                                    "수수료율입력": st.column_config.NumberColumn(
+                                        "✍️ 수수료율", help="수수료 **비율(%)**을 입력해주세요. 예: 3.5"
+                                    ),
+                                    "수수료금액입력": st.column_config.NumberColumn(
+                                        "✍️ 수수료금액", help="계산된 **수수료 총액**을 입력해주세요."
+                                    ),
+                                    "전화번호": st.column_config.TextColumn(
+                                        "✍️ 전화번호", help="고객의 연락처를 입력해주세요."
+                                    ),
+                                    "전기차보조금": st.column_config.NumberColumn(
+                                        "✍️ 전기차보조금", help="전기차 보조금이 있는 경우 **금액**을 입력해주세요."
+                                    )
+                                },
+                                num_rows="dynamic",
+                                key=f"editor_{selected_salesperson}"
                 )
 
                 st.markdown("---")
