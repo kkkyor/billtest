@@ -96,14 +96,24 @@ if 'logged_in' not in st.session_state or not st.session_state.logged_in:
 # 2. 로그인 성공 시 메인 앱 표시
 else:
     # --- UI 구성 ---
-    st.sidebar.success(f"'{st.session_state.username}' 님 환영합니다.")
-    if st.sidebar.button("로그아웃"):
-        st.session_state.logged_in = False
-        st.session_state.username = ""
-        st.rerun()
 
-    st.title("👨‍💼 영업사원별 수수료 현황 조회 및 편집")
-    st.markdown("---")
+    # ✅ 기존 st.title... 부분을 아래 코드로 교체하세요
+
+    # --- 헤더 UI 구성 ---
+    col1, col2 = st.columns([0.8, 0.2])  # 화면을 8:2 비율로 분할
+    
+    with col1:
+        st.title("👨‍💼 수수료 현황 조회 및 편집")
+        st.markdown(f"**{st.session_state.username}** 님, 환영합니다.")
+    
+    with col2:
+        st.write("") # 버튼을 수직으로 가운데 정렬하기 위한 빈 공간
+        if st.button("로그아웃", use_container_width=True):
+            st.session_state.logged_in = False
+            st.session_state.username = ""
+            st.rerun()
+    
+    st.markdown("---") # 헤더와 본문을 나누는 선
 
     df = load_data_from_google_sheet()
 
