@@ -130,8 +130,17 @@ else:
 
                 edited_df = st.data_editor(
                     result_df,
+                    use_container_width=True,
                     column_config={
                         "sheet_row_number": None,
+
+                        # 3. 요청에 따라 추가로 숨길 열
+                        "고유ID": None,
+                        "수수료유형": None,
+                        "formula_type": None,
+                        "회사부가세": None,
+                        "회사수수료": None,
+                        
                         "수수료율입력": st.column_config.NumberColumn("✍️ 수수료율", help="수수료 **비율(%)**을 입력해주세요. 예: 3.5"),
                         "수수료금액입력": st.column_config.NumberColumn("✍️ 수수료금액", help="계산된 **수수료 총액**을 입력해주세요."),
                         "전화번호": st.column_config.TextColumn("✍️ 전화번호", help="고객의 연락처를 입력해주세요."),
