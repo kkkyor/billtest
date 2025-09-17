@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import gspread
 from google.oauth2.service_account import Credentials
+from googleapiclient.discovery import build
 
 # --- 페이지 기본 설정 ---
 st.set_page_config(
@@ -43,32 +44,47 @@ def load_data_from_google_sheet():
     except Exception as e:
         st.error(f"데이터 로딩 중 오류 발생: {e}")
         return None, None
-
-# ❗ 변경점 2: '전체 삭제 후 새로 쓰기' 대신 '부분 업데이트' 함수로 교체
-def update_rows_in_sheet(worksheet, edited_df):
-    """수정된 DataFrame의 각 행을 구글 시트의 해당 위치에 업데이트합니다."""
+        
+def update_rows_in_sheet(edited_df):
+    """
+    (신규) google-api-python-client를 사용하여 수정된 행을 구글 시트에 업데이트합니다.
+    """
     try:
-        headers = worksheet.row_values(1)
-        if 'sheet_row_number' not in edited_df.columns:
-            st.error("업데이트할 행 번호를 찾을 수 없습니다. 데이터 로딩 부분을 확인해주세요.")
-            return False
+        # 1. 자격 증명 및 API 클라이언트 서비스 빌드
+        creds_dict = st.secrets["gcp_service_account"]
+        scopes = ['https://www.googleapis.com/auth/spreadsheets'] # 쓰기 권한 스코프
+        creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+        service = build('sheets', 'v4', credentials=creds)
 
-        # 여러 행을 한번에 업데이트하기 위한 리스트 준비
-        update_requests = []
+        spreadsheet_id = "1A5yp1fIlsLw4OLjd2TX8VHfHLGSExCWvAbu-CBI8Euo" # 스프레드시트 ID
+        sheet_name = "온라인" # 시트 이름
+
+        # 2. 업데이트 요청 데이터(data) 구성
+        data = []
         for index, row in edited_df.iterrows():
             row_number = int(row['sheet_row_number'])
-            # 시트의 헤더 순서에 맞게 행 데이터 정렬
-            ordered_row_values = [row.get(h, '') for h in headers]
-            update_requests.append({
-                'range': f'A{row_number}', # A열부터 시작하는 행 전체 범위
-                'values': [ordered_row_values],
+            
+            # DataFrame의 모든 값을 문자열로 변환 (API 오류 방지)
+            values = [str(val) for val in row.drop('sheet_row_number').values]
+            
+            data.append({
+                'range': f"{sheet_name}!A{row_number}", # '온라인'!A2 와 같은 형식
+                'values': [values]
             })
-        
-        # gspread의 batch_update 기능을 사용하여 여러 행을 한번의 API 호출로 업데이트
-        if update_requests:
-            worksheet.batch_update(update_requests, value_input_option='USER_ENTERED')
 
+        # 3. API 요청 본문(body) 구성
+        body = {
+            'valueInputOption': 'USER_ENTERED',
+            'data': data
+        }
+
+        # 4. spreadsheets.values.batchUpdate API 호출
+        result = service.spreadsheets().values().batchUpdate(
+            spreadsheetId=spreadsheet_id, body=body).execute()
+        
+        st.write(result) # 디버깅용: API 호출 결과 확인
         return True
+
     except Exception as e:
         st.error(f"시트 업데이트 중 오류 발생: {e}")
         return False
@@ -134,10 +150,10 @@ if df is not None:
                             changed_indices = changes.index
                             rows_to_update = edited_df.loc[changed_indices]
                             
-                            if update_rows_in_sheet(worksheet, rows_to_update):
+                            if update_rows_in_sheet(rows_to_update):
                                 st.success("🎉 성공적으로 구글 시트에 저장되었습니다!")
                                 st.cache_data.clear()
-                                st.rerun() # 저장 후 즉시 새로고침하여 최신 상태 반영
+                                st.rerun()
                             else:
                                 st.error("저장에 실패했습니다.")
                         else:
