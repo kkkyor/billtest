@@ -5,3 +5,4 @@ gspread==5.12.4
 google-auth-oauthlib
 google-auth==2.17.3
 gspread-dataframe
+google-api-python-client
