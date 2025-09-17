@@ -1,6 +1,7 @@
 # requirements.txt
 streamlit
 pandas
-gspread
+gspread==5.12.4
 google-auth-oauthlib
+google-auth==2.17.3
 gspread-dataframe
